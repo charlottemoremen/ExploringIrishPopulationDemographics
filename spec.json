@@ -20,7 +20,8 @@
   "spacing": 20,
   "vconcat": [
     {
-      "spacing": 20,
+      "center": true,
+      "spacing": 40,
       "hconcat": [
         {
           "data": {
@@ -185,7 +186,8 @@
       }
     },
     {
-      "spacing": 20,
+      "center": true,
+      "spacing": 40,
       "hconcat": [
         {
           "data": {
