@@ -9,7 +9,7 @@
     "fontWeight": "bold",
     "anchor": "middle",
     "subtitlePadding": 10,
-    "offset": 20
+    "offset": 10
   },
   "datasets": {
     "mainPopSource": {
@@ -106,7 +106,7 @@
       },
       "width": 400,
       "height": 350,
-      "padding": { "top": 20 },
+      "padding": { "top": 10 },
       "title": "Irish Population Growth by Region (2023 → 2024)",
       "transform": [
         {
