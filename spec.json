@@ -8,8 +8,8 @@
     "fontSize": 24,
     "fontWeight": "bold",
     "anchor": "middle",
-    "subtitlePadding": 5,
-    "offset": 5
+    "subtitlePadding": 10,
+    "offset": 10
   },
   "datasets": {
     "mainPopSource": {
@@ -26,7 +26,7 @@
       },
       "width": 400,
       "height": 350,
-      "padding": { "top": 8 },
+  
       "projection": { "type": "mercator" },
       "title": "2024 Irish Population by Region",
       "transform": [
@@ -106,7 +106,7 @@
       },
       "width": 400,
       "height": 350,
-      "padding": { "top": 8 },
+   
       "title": "Irish Population Growth by Region (2023 → 2024)",
       "transform": [
         {
