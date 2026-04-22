@@ -3,7 +3,7 @@
   "title": {
     "text": "Exploring Irish Population Demographics",
     "subtitle": "Click a region on the map to explore its data in depth. Click outside the map to view the countrywide data again.",
-   "subtitleColor": "gray",
+    "subtitleColor": "gray",
     "subtitleFontSize": 14,
     "fontSize": 24,
     "fontWeight": "bold",
@@ -369,5 +369,7 @@
       }
     }
   ],
-  "config": { "view": { "stroke": null } }
+  "config": {
+    "view": { "stroke": null }
+  }
 }
