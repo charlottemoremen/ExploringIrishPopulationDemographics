@@ -17,358 +17,346 @@
       "format": { "type": "csv" }
     }
   },
-  "spacing": 20,
-  "vconcat": [
+  "concat": [
     {
-      "center": true,
-      "spacing": 40,
-      "hconcat": [
+      "data": {
+        "name": "nuts3_map",
+        "url": "https://gist.githubusercontent.com/avvo1/449504056fe534e0a2d5f35d6a3728fe/raw/aad1d10c1e5cca8d2741f67f1c76d87816b397db/ireland-nuts3-small.json",
+        "format": { "type": "json", "property": "features" }
+      },
+      "width": 400,
+      "height": 350,
+      "padding": { "top": 20 },
+      "projection": { "type": "mercator" },
+      "title": "2024 Irish Population by Region",
+      "transform": [
         {
-          "data": {
-            "name": "nuts3_map",
-            "url": "https://gist.githubusercontent.com/avvo1/449504056fe534e0a2d5f35d6a3728fe/raw/aad1d10c1e5cca8d2741f67f1c76d87816b397db/ireland-nuts3-small.json",
-            "format": { "type": "json", "property": "features" }
-          },
-          "width": 400,
-          "height": 350,
-          "padding": { "top": 20 },
-          "projection": { "type": "mercator" },
-          "title": "2024 Irish Population by Region",
-          "transform": [
-            {
-              "lookup": "properties.NUTS3NAME",
-              "from": {
-                "data": {
-                  "name": "regional_population_2024",
-                  "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/regional_population_2024.csv",
-                  "format": { "type": "csv" }
-                },
-                "key": "NUTS 3 Region",
-                "fields": ["Population_2024"]
-              }
+          "lookup": "properties.NUTS3NAME",
+          "from": {
+            "data": {
+              "name": "regional_population_2024",
+              "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/regional_population_2024.csv",
+              "format": { "type": "csv" }
             },
-            {
-              "calculate": "format(datum.Population_2024, ',')",
-              "as": "VALUE_fmt"
-            }
-          ],
-          "params": [
-            {
-              "name": "region_select",
-              "select": {
-                "type": "point",
-                "fields": ["properties.NUTS3NAME"],
-                "on": "click",
-                "clear": "dblclick",
-                "toggle": false
-              }
-            }
-          ],
-          "mark": {
-            "type": "geoshape",
-            "stroke": "grey",
-            "strokeWidth": 0.5,
-            "strokeJoin": "round",
-            "strokeMiterLimit": 1
-          },
-          "encoding": {
-            "color": {
-              "field": "Population_2024",
-              "type": "quantitative",
-              "title": "Population",
-              "scale": { "scheme": "greens" },
-              "legend": {
-                "labelExpr": "datum.value >= 1e6 ? format(datum.value / 1e6, '.1f') + 'M' : format(datum.value / 1e3, '.0f') + 'k'"
-              }
-            },
-            "strokeWidth": {
-              "condition": {
-                "param": "region_select",
-                "empty": false,
-                "value": 3
-              },
-              "value": 0.5
-            },
-            "stroke": {
-              "condition": {
-                "param": "region_select",
-                "empty": false,
-                "value": "red"
-              },
-              "value": "gray"
-            },
-            "tooltip": [
-              { "field": "properties.NUTS3NAME", "title": "Region" },
-              { "field": "properties.NUTS3", "title": "NUTS3" },
-              { "field": "VALUE_fmt", "title": "Population" }
-            ]
+            "key": "NUTS 3 Region",
+            "fields": ["Population_2024"]
           }
         },
         {
-          "data": {
-            "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/population_change_summary.csv",
-            "format": { "type": "csv" }
-          },
-          "width": 400,
-          "height": 350,
-          "padding": { "top": 20 },
-          "title": "Irish Population Growth by Region (2023 → 2024)",
-          "transform": [
-            {
-              "lookup": "NUTS 3 Region",
-              "from": {
-                "data": {
-                  "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/regional_population_2024.csv",
-                  "format": { "type": "csv" }
-                },
-                "key": "NUTS 3 Region",
-                "fields": ["Population_2024"]
-              }
-            },
-            {
-              "calculate": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] : null",
-              "as": "selectedRegion"
-            },
-            {
-              "calculate": "toNumber(datum['Total Population Change (2024 - 2023)'])",
-              "as": "Change_2423"
-            },
-            { "calculate": "toNumber(datum.Population_2024)", "as": "Pop_2024" },
-            { "calculate": "datum.Pop_2024 - datum.Change_2423", "as": "Pop_2023" },
-            { "calculate": "(datum.Change_2423 / datum.Pop_2023) * 100", "as": "Pct_Growth" },
-            { "calculate": "format(datum.Pop_2023, ',')", "as": "Pop23_fmt" },
-            { "calculate": "format(datum.Pop_2024, ',')", "as": "Pop24_fmt" },
-            { "calculate": "format(datum.Change_2423, '+,')", "as": "Change_fmt" },
-            { "calculate": "format(datum.Pct_Growth, '+.2f') + '%'", "as": "Pct_fmt" }
-          ],
-          "mark": { "type": "bar" },
-          "encoding": {
-            "y": {
-              "field": "NUTS 3 Region",
-              "type": "nominal",
-              "title": "Region",
-              "sort": { "field": "Pct_Growth", "order": "descending" }
-            },
-            "x": {
-              "field": "Pct_Growth",
-              "type": "quantitative",
-              "title": "2024 Growth (as % of 2023 population)",
-              "scale": { "domain": [0, 2.5], "nice": false, "zero": false },
-              "axis": { "format": ".1f", "labelExpr": "datum.label + '%'" }
-            },
-            "color": {
-              "condition": {
-                "test": "datum.selectedRegion != null && datum.selectedRegion === datum['NUTS 3 Region']",
-                "value": "firebrick"
-              },
-              "value": "#2A6230"
-            },
-            "opacity": {
-              "condition": {
-                "test": "datum.selectedRegion == null || datum.selectedRegion === datum['NUTS 3 Region']",
-                "value": 1
-              },
-              "value": 0.55
-            },
-            "tooltip": [
-              { "field": "NUTS 3 Region", "title": "Region" },
-              { "field": "Pop23_fmt", "title": "2023 population" },
-              { "field": "Pop24_fmt", "title": "2024 population" },
-              { "field": "Change_fmt", "title": "Net change" },
-              { "field": "Pct_fmt", "title": "% growth" }
-            ]
+          "calculate": "format(datum.Population_2024, ',')",
+          "as": "VALUE_fmt"
+        }
+      ],
+      "params": [
+        {
+          "name": "region_select",
+          "select": {
+            "type": "point",
+            "fields": ["properties.NUTS3NAME"],
+            "on": "click",
+            "clear": "dblclick",
+            "toggle": false
           }
         }
       ],
-      "resolve": {
-        "scale": { "color": "independent" },
-        "legend": { "color": "independent" }
+      "mark": {
+        "type": "geoshape",
+        "stroke": "grey",
+        "strokeWidth": 0.5,
+        "strokeJoin": "round",
+        "strokeMiterLimit": 1
+      },
+      "encoding": {
+        "color": {
+          "field": "Population_2024",
+          "type": "quantitative",
+          "title": "Population",
+          "scale": { "scheme": "greens" },
+          "legend": {
+            "labelExpr": "datum.value >= 1e6 ? format(datum.value / 1e6, '.1f') + 'M' : format(datum.value / 1e3, '.0f') + 'k'"
+          }
+        },
+        "strokeWidth": {
+          "condition": {
+            "param": "region_select",
+            "empty": false,
+            "value": 3
+          },
+          "value": 0.5
+        },
+        "stroke": {
+          "condition": {
+            "param": "region_select",
+            "empty": false,
+            "value": "red"
+          },
+          "value": "gray"
+        },
+        "tooltip": [
+          { "field": "properties.NUTS3NAME", "title": "Region" },
+          { "field": "properties.NUTS3", "title": "NUTS3" },
+          { "field": "VALUE_fmt", "title": "Population" }
+        ]
       }
     },
     {
-      "center": true,
-      "spacing": 40,
-      "hconcat": [
+      "data": {
+        "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/population_change_summary.csv",
+        "format": { "type": "csv" }
+      },
+      "width": 400,
+      "height": 350,
+      "padding": { "top": 20 },
+      "title": "Irish Population Growth by Region (2023 → 2024)",
+      "transform": [
         {
-          "data": {
-            "name": "populationData2",
-            "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/populationData.csv",
-            "format": { "type": "csv" }
-          },
-          "title": "2024 Irish Population by Age Group & Region",
-          "width": 400,
-          "height": 400,
-          "transform": [
-            { "filter": "datum.Year == 2024" },
-            { "filter": "datum['Age Group'] !== 'All ages'" },
-            { "filter": "datum.Sex === 'Both sexes'" },
-            { "filter": "datum['NUTS 3 Region'] !== 'Ireland'" },
-            {
-              "calculate": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] : null",
-              "as": "selectedRegion"
+          "lookup": "NUTS 3 Region",
+          "from": {
+            "data": {
+              "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/regional_population_2024.csv",
+              "format": { "type": "csv" }
             },
-            {
-              "calculate": "datum['NUTS 3 Region'] == 'Dublin' ? 'Dublin' : ((datum.selectedRegion == null || datum.selectedRegion == 'Dublin') ? 'Avg. of All Other Regions' : (datum['NUTS 3 Region'] == datum.selectedRegion ? datum.selectedRegion : null))",
-              "as": "Region_Group"
-            },
-            { "filter": "datum.Region_Group != null" },
-            {
-              "calculate": "datum['Age Group'] === '85 years and over' ? '85 yrs +' : replace(datum['Age Group'], ' years', ' yrs')",
-              "as": "Age_Group_yrs"
-            },
-            {
-              "calculate": "toNumber(split(datum['Age Group'], ' ')[0])",
-              "as": "age_start"
-            },
-            {
-              "aggregate": [
-                { "op": "mean", "field": "VALUE", "as": "Population" }
-              ],
-              "groupby": ["Region_Group", "Age_Group_yrs", "age_start"]
-            }
-          ],
-          "encoding": {
-            "x": {
-              "field": "Age_Group_yrs",
-              "type": "nominal",
-              "sort": { "field": "age_start", "order": "ascending" },
-              "title": "Age Group",
-              "axis": { "labelAngle": 45 }
-            },
-            "y": {
-              "field": "Population",
-              "type": "quantitative",
-              "title": "Population",
-              "axis": { "format": "s", "grid": true }
-            },
-            "color": {
-              "field": "Region_Group",
-              "type": "nominal",
-              "title": "Region Group",
-              "sort": ["Dublin", "Avg. of All Other Regions"],
-              "scale": { "range": ["firebrick", "tan"] },
-              "legend": {
-                "title": "Region Group",
-                "orient": "top-right",
-                "offset": 10,
-                "fillColor": "white",
-                "strokeColor": "black",
-                "padding": 5
-              }
-            }
-          },
-          "layer": [
-            { "mark": { "type": "line", "strokeWidth": 2 } },
-            {
-              "mark": { "type": "point", "filled": true, "size": 45 },
-              "encoding": {
-                "tooltip": [
-                  { "field": "Age_Group_yrs", "title": "Age Group" },
-                  { "field": "Region_Group", "title": "Region" },
-                  { "field": "Population", "title": "Population", "format": "," }
-                ]
-              }
-            }
-          ]
+            "key": "NUTS 3 Region",
+            "fields": ["Population_2024"]
+          }
         },
         {
-          "data": {
-            "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/populationData.csv",
-            "format": { "type": "csv" }
+          "calculate": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] : null",
+          "as": "selectedRegion"
+        },
+        {
+          "calculate": "toNumber(datum['Total Population Change (2024 - 2023)'])",
+          "as": "Change_2423"
+        },
+        { "calculate": "toNumber(datum.Population_2024)", "as": "Pop_2024" },
+        { "calculate": "datum.Pop_2024 - datum.Change_2423", "as": "Pop_2023" },
+        { "calculate": "(datum.Change_2423 / datum.Pop_2023) * 100", "as": "Pct_Growth" },
+        { "calculate": "format(datum.Pop_2023, ',')", "as": "Pop23_fmt" },
+        { "calculate": "format(datum.Pop_2024, ',')", "as": "Pop24_fmt" },
+        { "calculate": "format(datum.Change_2423, '+,')", "as": "Change_fmt" },
+        { "calculate": "format(datum.Pct_Growth, '+.2f') + '%'", "as": "Pct_fmt" }
+      ],
+      "mark": { "type": "bar" },
+      "encoding": {
+        "y": {
+          "field": "NUTS 3 Region",
+          "type": "nominal",
+          "title": "Region",
+          "sort": { "field": "Pct_Growth", "order": "descending" }
+        },
+        "x": {
+          "field": "Pct_Growth",
+          "type": "quantitative",
+          "title": "2024 Growth (as % of 2023 population)",
+          "scale": { "domain": [0, 2.5], "nice": false, "zero": false },
+          "axis": { "format": ".1f", "labelExpr": "datum.label + '%'" }
+        },
+        "color": {
+          "condition": {
+            "test": "datum.selectedRegion != null && datum.selectedRegion === datum['NUTS 3 Region']",
+            "value": "firebrick"
           },
-          "width": 400,
-          "height": 400,
-          "title": {
-            "text": {
-              "signal": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] + ' 2024 Population by Sex and Age Group' : 'Ireland 2024 Population by Sex and Age Group'"
-            }
+          "value": "#2A6230"
+        },
+        "opacity": {
+          "condition": {
+            "test": "datum.selectedRegion == null || datum.selectedRegion === datum['NUTS 3 Region']",
+            "value": 1
           },
-          "transform": [
-            { "filter": "datum.Year == 2024" },
-            { "filter": "datum['Age Group'] !== 'All ages'" },
-            {
-              "calculate": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] : 'Ireland'",
-              "as": "selectedRegion"
-            },
-            {
-              "filter": "datum['NUTS 3 Region'] === datum.selectedRegion"
-            },
-            { "filter": "datum.Sex !== 'Both sexes'" },
-            {
-              "calculate": "toNumber(split(datum['Age Group'], ' ')[0])",
-              "as": "age_start"
-            },
-            {
-              "calculate": "floor(datum.age_start / 10) * 10",
-              "as": "decade_start"
-            },
-            {
-              "calculate": "datum.decade_start < 80 ? (datum.decade_start + '-' + (datum.decade_start + 9) + '') : (datum.decade_start + '+')",
-              "as": "Decade_Group"
-            },
-            {
-              "aggregate": [
-                { "op": "sum", "field": "VALUE", "as": "Population" }
-              ],
-              "groupby": [
-                "Decade_Group",
-                "decade_start",
-                "Sex",
-                "NUTS 3 Region"
-              ]
-            }
+          "value": 0.55
+        },
+        "tooltip": [
+          { "field": "NUTS 3 Region", "title": "Region" },
+          { "field": "Pop23_fmt", "title": "2023 population" },
+          { "field": "Pop24_fmt", "title": "2024 population" },
+          { "field": "Change_fmt", "title": "Net change" },
+          { "field": "Pct_fmt", "title": "% growth" }
+        ]
+      }
+    },
+    {
+      "data": {
+        "name": "populationData2",
+        "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/populationData.csv",
+        "format": { "type": "csv" }
+      },
+      "title": "2024 Irish Population by Age Group & Region",
+      "width": 400,
+      "height": 400,
+      "transform": [
+        { "filter": "datum.Year == 2024" },
+        { "filter": "datum['Age Group'] !== 'All ages'" },
+        { "filter": "datum.Sex === 'Both sexes'" },
+        { "filter": "datum['NUTS 3 Region'] !== 'Ireland'" },
+        {
+          "calculate": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] : null",
+          "as": "selectedRegion"
+        },
+        {
+          "calculate": "datum['NUTS 3 Region'] == 'Dublin' ? 'Dublin' : ((datum.selectedRegion == null || datum.selectedRegion == 'Dublin') ? 'Avg. of All Other Regions' : (datum['NUTS 3 Region'] == datum.selectedRegion ? datum.selectedRegion : null))",
+          "as": "Region_Group"
+        },
+        { "filter": "datum.Region_Group != null" },
+        {
+          "calculate": "datum['Age Group'] === '85 years and over' ? '85 yrs +' : replace(datum['Age Group'], ' years', ' yrs')",
+          "as": "Age_Group_yrs"
+        },
+        {
+          "calculate": "toNumber(split(datum['Age Group'], ' ')[0])",
+          "as": "age_start"
+        },
+        {
+          "aggregate": [
+            { "op": "mean", "field": "VALUE", "as": "Population" }
           ],
-          "mark": { "type": "bar" },
+          "groupby": ["Region_Group", "Age_Group_yrs", "age_start"]
+        }
+      ],
+      "encoding": {
+        "x": {
+          "field": "Age_Group_yrs",
+          "type": "nominal",
+          "sort": { "field": "age_start", "order": "ascending" },
+          "title": "Age Group",
+          "axis": { "labelAngle": 45 }
+        },
+        "y": {
+          "field": "Population",
+          "type": "quantitative",
+          "title": "Population",
+          "axis": { "format": "s", "grid": true }
+        },
+        "color": {
+          "field": "Region_Group",
+          "type": "nominal",
+          "title": "Region Group",
+          "sort": ["Dublin", "Avg. of All Other Regions"],
+          "scale": { "range": ["firebrick", "tan"] },
+          "legend": {
+            "title": "Region Group",
+            "orient": "top-right",
+            "offset": 10,
+            "fillColor": "white",
+            "strokeColor": "black",
+            "padding": 5
+          }
+        }
+      },
+      "layer": [
+        { "mark": { "type": "line", "strokeWidth": 2 } },
+        {
+          "mark": { "type": "point", "filled": true, "size": 45 },
           "encoding": {
-            "x": {
-              "field": "Decade_Group",
-              "type": "nominal",
-              "sort": { "field": "decade_start", "order": "ascending" },
-              "title": "Age Group",
-              "axis": { "labelExpr": "datum.value + ' yrs'", "labelAngle": 45 },
-              "scale": { "paddingInner": 0.25 }
-            },
-            "xOffset": { "field": "Sex", "sort": ["Male", "Female"] },
-            "y": {
-              "field": "Population",
-              "type": "quantitative",
-              "title": "Population",
-              "scale": { "zero": true },
-              "axis": { "format": "s" }
-            },
-            "color": {
-              "field": "Sex",
-              "type": "nominal",
-              "title": "Sex",
-              "scale": {
-                "domain": ["Male", "Female"],
-                "range": ["mediumaquamarine", "darkorchid"]
-              },
-              "legend": {
-                "title": "Sex",
-                "orient": "top-right",
-                "offset": 10,
-                "fillColor": "white",
-                "strokeColor": "black",
-                "padding": 5
-              }
-            },
             "tooltip": [
-              { "field": "Decade_Group", "title": "Age Decade" },
-              { "field": "Sex", "title": "Sex" },
+              { "field": "Age_Group_yrs", "title": "Age Group" },
+              { "field": "Region_Group", "title": "Region" },
               { "field": "Population", "title": "Population", "format": "," }
             ]
           }
         }
+      ]
+    },
+    {
+      "data": {
+        "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/populationData.csv",
+        "format": { "type": "csv" }
+      },
+      "width": 400,
+      "height": 400,
+      "title": {
+        "text": {
+          "signal": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] + ' 2024 Population by Sex and Age Group' : 'Ireland 2024 Population by Sex and Age Group'"
+        }
+      },
+      "transform": [
+        { "filter": "datum.Year == 2024" },
+        { "filter": "datum['Age Group'] !== 'All ages'" },
+        {
+          "calculate": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] : 'Ireland'",
+          "as": "selectedRegion"
+        },
+        {
+          "filter": "datum['NUTS 3 Region'] === datum.selectedRegion"
+        },
+        { "filter": "datum.Sex !== 'Both sexes'" },
+        {
+          "calculate": "toNumber(split(datum['Age Group'], ' ')[0])",
+          "as": "age_start"
+        },
+        {
+          "calculate": "floor(datum.age_start / 10) * 10",
+          "as": "decade_start"
+        },
+        {
+          "calculate": "datum.decade_start < 80 ? (datum.decade_start + '-' + (datum.decade_start + 9) + '') : (datum.decade_start + '+')",
+          "as": "Decade_Group"
+        },
+        {
+          "aggregate": [
+            { "op": "sum", "field": "VALUE", "as": "Population" }
+          ],
+          "groupby": [
+            "Decade_Group",
+            "decade_start",
+            "Sex",
+            "NUTS 3 Region"
+          ]
+        }
       ],
-      "resolve": {
-        "scale": { "color": "independent" },
-        "legend": { "color": "independent" }
+      "mark": { "type": "bar" },
+      "encoding": {
+        "x": {
+          "field": "Decade_Group",
+          "type": "nominal",
+          "sort": { "field": "decade_start", "order": "ascending" },
+          "title": "Age Group",
+          "axis": { "labelExpr": "datum.value + ' yrs'", "labelAngle": 45 },
+          "scale": { "paddingInner": 0.25 }
+        },
+        "xOffset": { "field": "Sex", "sort": ["Male", "Female"] },
+        "y": {
+          "field": "Population",
+          "type": "quantitative",
+          "title": "Population",
+          "scale": { "zero": true },
+          "axis": { "format": "s" }
+        },
+        "color": {
+          "field": "Sex",
+          "type": "nominal",
+          "title": "Sex",
+          "scale": {
+            "domain": ["Male", "Female"],
+            "range": ["mediumaquamarine", "darkorchid"]
+          },
+          "legend": {
+            "title": "Sex",
+            "orient": "top-right",
+            "offset": 10,
+            "fillColor": "white",
+            "strokeColor": "black",
+            "padding": 5
+          }
+        },
+        "tooltip": [
+          { "field": "Decade_Group", "title": "Age Decade" },
+          { "field": "Sex", "title": "Sex" },
+          { "field": "Population", "title": "Population", "format": "," }
+        ]
       }
     }
   ],
+  "columns": 2,
+  "spacing": 40,
+  "align": "all",
+  "bounds": "full",
+  "center": true,
+  "resolve": {
+    "scale": { "color": "independent" },
+    "legend": { "color": "independent" }
+  },
   "config": {
     "view": { "stroke": null },
-    "concat": { "spacing": 20 }
+    "concat": { "spacing": 40 }
   }
 }
