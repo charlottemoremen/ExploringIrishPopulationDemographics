@@ -347,7 +347,7 @@
     }
   ],
   "columns": 2,
-  "spacing": 40,
+  "spacing": 24,
   "align": "all",
   "bounds": "full",
   "center": true,
@@ -357,6 +357,6 @@
   },
   "config": {
     "view": { "stroke": null },
-    "concat": { "spacing": 40 }
+    "concat": { "spacing": 24 }
   }
 }
