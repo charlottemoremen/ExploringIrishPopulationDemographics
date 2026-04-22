@@ -106,7 +106,7 @@
   "width": 400,
   "height": 350,
   "padding": { "top": 20 },
-  "title": "Irish Population Growth by Region (2023 â†’ 2024)",
+  "title": "Irish Population Growth by Region (2023 → 2024)",
   "transform": [
     {
       "lookup": "NUTS 3 Region",
