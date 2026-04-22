@@ -1,5 +1,10 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
+  "autosize": {
+    "type": "fit-x",
+    "contains": "padding",
+    "resize": true
+  },
   "title": {
     "text": "Exploring Irish Population Demographics",
     "subtitle": "Click a region on the map to explore its data in depth. Click outside the map to view the countrywide data again.",
@@ -17,8 +22,10 @@
       "format": { "type": "csv" }
     }
   },
+  "spacing": 18,
   "vconcat": [
     {
+      "spacing": 18,
       "hconcat": [
         {
           "data": {
@@ -26,7 +33,7 @@
             "url": "https://gist.githubusercontent.com/avvo1/449504056fe534e0a2d5f35d6a3728fe/raw/aad1d10c1e5cca8d2741f67f1c76d87816b397db/ireland-nuts3-small.json",
             "format": { "type": "json", "property": "features" }
           },
-          "width": 400,
+          "width": "container",
           "height": 350,
           "padding": { "top": 20 },
           "projection": { "type": "mercator" },
@@ -111,7 +118,7 @@
             "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/population_change_summary.csv",
             "format": { "type": "csv" }
           },
-          "width": 400,
+          "width": "container",
           "height": 350,
           "padding": { "top": 20 },
           "title": "Irish Population Growth by Region (2023 → 2024)",
@@ -188,6 +195,7 @@
       }
     },
     {
+      "spacing": 20,
       "hconcat": [
         {
           "data": {
@@ -196,7 +204,7 @@
             "format": { "type": "csv" }
           },
           "title": "2024 Irish Population by Age Group & Region",
-          "width": 400,
+          "width": "container",
           "height": 400,
           "transform": [
             { "filter": "datum.Year == 2024" },
@@ -276,8 +284,8 @@
             "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/populationData.csv",
             "format": { "type": "csv" }
           },
+          "width": "container",
           "height": 400,
-          "width": 400,
           "title": {
             "text": {
               "signal": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] + ' 2024 Population by Sex and Age Group' : 'Ireland 2024 Population by Sex and Age Group'"
@@ -362,7 +370,6 @@
         }
       ],
       "align": "all",
-      "spacing": 40,
       "resolve": {
         "scale": { "color": "independent" },
         "legend": { "color": "independent" }
@@ -370,6 +377,7 @@
     }
   ],
   "config": {
-    "view": { "stroke": null }
+    "view": { "stroke": null },
+    "concat": { "spacing": 18 }
   }
 }
