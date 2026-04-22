@@ -2,7 +2,7 @@
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
   "title": {
     "text": "Exploring Irish Population Demographics",
-    "subtitle": "Click a region on the map to explore its data in depth. Double-click the map background to reset to nationwide view.",
+    "subtitle": "Click a region on the map to explore its data in depth. Click the map background to return to countrywide data.",
     "subtitleColor": "gray",
     "subtitleFontSize": 14,
     "fontSize": 24,
