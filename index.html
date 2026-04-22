@@ -23,7 +23,7 @@
 
     .page {
       width: 100%;
-      max-width: 1600px;
+      max-width: 1500px;
       margin: 0 auto;
       padding: 16px;
     }
@@ -43,13 +43,17 @@
 
     #vis {
       width: 100%;
-      margin: 0 auto;
+      min-width: 0;
+    }
+
+    .vega-embed,
+    .vega-embed > div {
+      width: 100%;
     }
   </style>
 </head>
 <body>
   <div class="page">
-
     <div id="vis"></div>
   </div>
 
@@ -59,60 +63,57 @@
     let currentView = null;
     let resizeTimer = null;
 
-    function clone(obj) {
+    function deepClone(obj) {
       return JSON.parse(JSON.stringify(obj));
     }
 
     function buildResponsiveSpec(spec, containerWidth) {
-      const s = clone(spec);
+      const s = deepClone(spec);
 
       const mobile = containerWidth < 900;
-      const gap = mobile ? 28 : 40;
+      const gap = mobile ? 24 : 32;
       const columns = mobile ? 1 : 2;
-      const usableWidth = Math.max(containerWidth - gap * (columns - 1), 320);
-      const panelWidth = Math.floor(usableWidth / columns);
 
-      const topCharts = clone(spec.vconcat[0].hconcat);
-      const bottomCharts = clone(spec.vconcat[1].hconcat);
+      const innerWidth = Math.max(containerWidth, 320);
+      const panelWidth = Math.floor((innerWidth - gap * (columns - 1)) / columns);
 
-      topCharts[0].width = panelWidth;
-      topCharts[1].width = panelWidth;
-      topCharts[0].height = mobile ? 320 : 350;
-      topCharts[1].height = mobile ? 320 : 350;
+      const topLeft = s.vconcat[0].hconcat[0];
+      const topRight = s.vconcat[0].hconcat[1];
+      const bottomLeft = s.vconcat[1].hconcat[0];
+      const bottomRight = s.vconcat[1].hconcat[1];
 
-      bottomCharts[0].width = panelWidth;
-      bottomCharts[1].width = panelWidth;
-      bottomCharts[0].height = mobile ? 360 : 400;
-      bottomCharts[1].height = mobile ? 360 : 400;
+      topLeft.width = panelWidth;
+      topRight.width = panelWidth;
+      bottomLeft.width = panelWidth;
+      bottomRight.width = panelWidth;
 
-      s.autosize = {
-        type: "pad",
-        contains: "padding",
-        resize: true
-      };
+      topLeft.height = mobile ? 300 : 350;
+      topRight.height = mobile ? 300 : 350;
+      bottomLeft.height = mobile ? 340 : 400;
+      bottomRight.height = mobile ? 340 : 400;
 
       s.vconcat = [
         mobile
           ? {
-              vconcat: topCharts,
+              vconcat: [topLeft, topRight],
               spacing: gap,
-              resolve: spec.vconcat[0].resolve
+              resolve: s.vconcat[0].resolve
             }
           : {
-              hconcat: topCharts,
+              hconcat: [topLeft, topRight],
               spacing: gap,
-              resolve: spec.vconcat[0].resolve
+              resolve: s.vconcat[0].resolve
             },
         mobile
           ? {
-              vconcat: bottomCharts,
+              vconcat: [bottomLeft, bottomRight],
               spacing: gap,
-              resolve: spec.vconcat[1].resolve
+              resolve: s.vconcat[1].resolve
             }
           : {
-              hconcat: bottomCharts,
+              hconcat: [bottomLeft, bottomRight],
               spacing: gap,
-              resolve: spec.vconcat[1].resolve
+              resolve: s.vconcat[1].resolve
             }
       ];
 
@@ -126,14 +127,14 @@
       }
 
       const containerWidth = visEl.clientWidth;
-      const responsiveSpec = buildResponsiveSpec(baseSpec, containerWidth);
+      const spec = buildResponsiveSpec(baseSpec, containerWidth);
 
       if (currentView) {
         currentView.finalize();
         visEl.innerHTML = "";
       }
 
-      const result = await vegaEmbed("#vis", responsiveSpec, {
+      const result = await vegaEmbed("#vis", spec, {
         actions: {
           export: true,
           source: false,
@@ -143,11 +144,12 @@
       });
 
       currentView = result.view;
+      window.dispatchEvent(new Event("resize"));
     }
 
     const observer = new ResizeObserver(() => {
       clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(render, 120);
+      resizeTimer = setTimeout(render, 100);
     });
 
     observer.observe(visEl);
