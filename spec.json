@@ -1,20 +1,15 @@
 {
   "$schema": "https://vega.github.io/schema/vega-lite/v6.json",
-  "autosize": {
-    "type": "fit-x",
-    "contains": "padding",
-    "resize": true
-  },
   "title": {
     "text": "Exploring Irish Population Demographics",
-    "subtitle": "Click a region on the map to explore its data in depth. Click outside the map to view the countrywide data again.",
+    "subtitle": "Click a region on the map to explore its data in depth. Double-click the map background to reset to nationwide view.",
     "subtitleColor": "gray",
     "subtitleFontSize": 14,
     "fontSize": 24,
     "fontWeight": "bold",
     "anchor": "middle",
     "subtitlePadding": 10,
-    "offset": 30
+    "offset": 20
   },
   "datasets": {
     "mainPopSource": {
@@ -22,10 +17,10 @@
       "format": { "type": "csv" }
     }
   },
-  "spacing": 18,
+  "spacing": 20,
   "vconcat": [
     {
-      "spacing": 18,
+      "spacing": 20,
       "hconcat": [
         {
           "data": {
@@ -33,7 +28,7 @@
             "url": "https://gist.githubusercontent.com/avvo1/449504056fe534e0a2d5f35d6a3728fe/raw/aad1d10c1e5cca8d2741f67f1c76d87816b397db/ireland-nuts3-small.json",
             "format": { "type": "json", "property": "features" }
           },
-          "width": "container",
+          "width": 400,
           "height": 350,
           "padding": { "top": 20 },
           "projection": { "type": "mercator" },
@@ -54,10 +49,6 @@
             {
               "calculate": "format(datum.Population_2024, ',')",
               "as": "VALUE_fmt"
-            },
-            {
-              "calculate": "{'type': 'Feature','geometry': datum.geometry,'properties': datum.properties}",
-              "as": "feature"
             }
           ],
           "params": [
@@ -69,8 +60,7 @@
                 "on": "click",
                 "clear": "dblclick",
                 "toggle": false
-              },
-              "value": [{ "properties.NUTS3NAME": "Ireland" }]
+              }
             }
           ],
           "mark": {
@@ -85,7 +75,7 @@
               "field": "Population_2024",
               "type": "quantitative",
               "title": "Population",
-              "scale": { "name": "populationScale", "scheme": "greens" },
+              "scale": { "scheme": "greens" },
               "legend": {
                 "labelExpr": "datum.value >= 1e6 ? format(datum.value / 1e6, '.1f') + 'M' : format(datum.value / 1e3, '.0f') + 'k'"
               }
@@ -96,7 +86,7 @@
                 "empty": false,
                 "value": 3
               },
-              "value": 0.3
+              "value": 0.5
             },
             "stroke": {
               "condition": {
@@ -107,9 +97,9 @@
               "value": "gray"
             },
             "tooltip": [
-              { "field": "properties.NUTS3NAME", "title": "region" },
-              { "field": "properties.NUTS3", "title": "nuts3" },
-              { "field": "VALUE_fmt", "title": "population" }
+              { "field": "properties.NUTS3NAME", "title": "Region" },
+              { "field": "properties.NUTS3", "title": "NUTS3" },
+              { "field": "VALUE_fmt", "title": "Population" }
             ]
           }
         },
@@ -118,7 +108,7 @@
             "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/population_change_summary.csv",
             "format": { "type": "csv" }
           },
-          "width": "container",
+          "width": 400,
           "height": 350,
           "padding": { "top": 20 },
           "title": "Irish Population Growth by Region (2023 → 2024)",
@@ -135,7 +125,7 @@
               }
             },
             {
-              "calculate": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] : 'Ireland'",
+              "calculate": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] : null",
               "as": "selectedRegion"
             },
             {
@@ -167,14 +157,14 @@
             },
             "color": {
               "condition": {
-                "test": "datum.selectedRegion === datum['NUTS 3 Region']",
+                "test": "datum.selectedRegion != null && datum.selectedRegion === datum['NUTS 3 Region']",
                 "value": "firebrick"
               },
               "value": "#2A6230"
             },
             "opacity": {
               "condition": {
-                "test": "datum.selectedRegion === 'Ireland' || datum.selectedRegion === datum['NUTS 3 Region']",
+                "test": "datum.selectedRegion == null || datum.selectedRegion === datum['NUTS 3 Region']",
                 "value": 1
               },
               "value": 0.55
@@ -204,7 +194,7 @@
             "format": { "type": "csv" }
           },
           "title": "2024 Irish Population by Age Group & Region",
-          "width": "container",
+          "width": 400,
           "height": 400,
           "transform": [
             { "filter": "datum.Year == 2024" },
@@ -212,11 +202,11 @@
             { "filter": "datum.Sex === 'Both sexes'" },
             { "filter": "datum['NUTS 3 Region'] !== 'Ireland'" },
             {
-              "calculate": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] : 'Ireland'",
+              "calculate": "length(data('region_select_store')) > 0 ? data('region_select_store')[0].values[0] : null",
               "as": "selectedRegion"
             },
             {
-              "calculate": "datum['NUTS 3 Region'] == 'Dublin' ? 'Dublin' : ((datum.selectedRegion == 'Ireland' || datum.selectedRegion == 'Dublin') ? 'Avg. of All Other Regions' : (datum['NUTS 3 Region'] == datum.selectedRegion ? datum.selectedRegion : null))",
+              "calculate": "datum['NUTS 3 Region'] == 'Dublin' ? 'Dublin' : ((datum.selectedRegion == null || datum.selectedRegion == 'Dublin') ? 'Avg. of All Other Regions' : (datum['NUTS 3 Region'] == datum.selectedRegion ? datum.selectedRegion : null))",
               "as": "Region_Group"
             },
             { "filter": "datum.Region_Group != null" },
@@ -284,7 +274,7 @@
             "url": "https://raw.githubusercontent.com/charlottemoremen/IrishPopulationDataPEA26/refs/heads/main/populationData.csv",
             "format": { "type": "csv" }
           },
-          "width": "container",
+          "width": 400,
           "height": 400,
           "title": {
             "text": {
@@ -369,7 +359,6 @@
           }
         }
       ],
-      "align": "all",
       "resolve": {
         "scale": { "color": "independent" },
         "legend": { "color": "independent" }
@@ -378,6 +367,6 @@
   ],
   "config": {
     "view": { "stroke": null },
-    "concat": { "spacing": 18 }
+    "concat": { "spacing": 20 }
   }
 }
