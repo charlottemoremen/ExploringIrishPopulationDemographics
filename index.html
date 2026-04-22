@@ -5,9 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Exploring Irish Population Demographics</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/vega"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-lite"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
 
   <style>
     * {
@@ -16,13 +16,14 @@
 
     body {
       margin: 0;
-      font-family: Arial, sans-serif;
-      background: #fff;
+      background: #ffffff;
       color: #222;
+      font-family: Arial, sans-serif;
     }
 
     .page {
-      width: min(1400px, 100vw);
+      width: 100%;
+      max-width: 1600px;
       margin: 0 auto;
       padding: 16px;
     }
@@ -30,16 +31,19 @@
     h1 {
       margin: 0 0 8px 0;
       text-align: center;
+      font-size: 28px;
     }
 
     .note {
       margin: 0 0 20px 0;
       text-align: center;
       color: #666;
+      font-size: 14px;
     }
 
     #vis {
       width: 100%;
+      margin: 0 auto;
     }
   </style>
 </head>
@@ -51,14 +55,104 @@
   </div>
 
   <script>
-    vegaEmbed("#vis", "spec.json", {
-      actions: {
-        export: true,
-        source: false,
-        editor: true
-      },
-      renderer: "svg"
-    }).catch(console.error);
+    const visEl = document.getElementById("vis");
+    let baseSpec = null;
+    let currentView = null;
+    let resizeTimer = null;
+
+    function clone(obj) {
+      return JSON.parse(JSON.stringify(obj));
+    }
+
+    function buildResponsiveSpec(spec, containerWidth) {
+      const s = clone(spec);
+
+      const mobile = containerWidth < 900;
+      const gap = mobile ? 28 : 40;
+      const columns = mobile ? 1 : 2;
+      const usableWidth = Math.max(containerWidth - gap * (columns - 1), 320);
+      const panelWidth = Math.floor(usableWidth / columns);
+
+      const topCharts = clone(spec.vconcat[0].hconcat);
+      const bottomCharts = clone(spec.vconcat[1].hconcat);
+
+      topCharts[0].width = panelWidth;
+      topCharts[1].width = panelWidth;
+      topCharts[0].height = mobile ? 320 : 350;
+      topCharts[1].height = mobile ? 320 : 350;
+
+      bottomCharts[0].width = panelWidth;
+      bottomCharts[1].width = panelWidth;
+      bottomCharts[0].height = mobile ? 360 : 400;
+      bottomCharts[1].height = mobile ? 360 : 400;
+
+      s.autosize = {
+        type: "pad",
+        contains: "padding",
+        resize: true
+      };
+
+      s.vconcat = [
+        mobile
+          ? {
+              vconcat: topCharts,
+              spacing: gap,
+              resolve: spec.vconcat[0].resolve
+            }
+          : {
+              hconcat: topCharts,
+              spacing: gap,
+              resolve: spec.vconcat[0].resolve
+            },
+        mobile
+          ? {
+              vconcat: bottomCharts,
+              spacing: gap,
+              resolve: spec.vconcat[1].resolve
+            }
+          : {
+              hconcat: bottomCharts,
+              spacing: gap,
+              resolve: spec.vconcat[1].resolve
+            }
+      ];
+
+      return s;
+    }
+
+    async function render() {
+      if (!baseSpec) {
+        const response = await fetch("spec.json");
+        baseSpec = await response.json();
+      }
+
+      const containerWidth = visEl.clientWidth;
+      const responsiveSpec = buildResponsiveSpec(baseSpec, containerWidth);
+
+      if (currentView) {
+        currentView.finalize();
+        visEl.innerHTML = "";
+      }
+
+      const result = await vegaEmbed("#vis", responsiveSpec, {
+        actions: {
+          export: true,
+          source: false,
+          editor: true
+        },
+        renderer: "svg"
+      });
+
+      currentView = result.view;
+    }
+
+    const observer = new ResizeObserver(() => {
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(render, 120);
+    });
+
+    observer.observe(visEl);
+    render();
   </script>
 </body>
 </html>
