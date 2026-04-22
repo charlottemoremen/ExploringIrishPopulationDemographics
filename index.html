@@ -15,56 +15,44 @@
     }
 
     :root {
-      --page-padding: 12px;
+      --page-padding: 8px;
     }
 
     html, body {
       margin: 0;
       padding: 0;
       width: 100%;
-      height: 100%;
+      min-height: 100%;
       background: #ffffff;
       color: #222;
       font-family: Arial, sans-serif;
-      overflow: hidden;
-    }
-
-    body {
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      overflow-x: hidden;
+      overflow-y: auto;
     }
 
     .page {
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      min-height: 100vh;
       padding: var(--page-padding);
-      overflow: hidden;
     }
 
     #vis-shell {
       width: 100%;
-      height: 100%;
-      overflow: hidden;
       display: flex;
       justify-content: center;
       align-items: flex-start;
+      overflow: visible;
     }
 
     #vis-stage {
       transform-origin: top center;
       will-change: transform;
+      display: inline-block;
     }
 
     .vega-embed,
     .vega-embed > div {
       max-width: none !important;
-    }
-
-    @media (max-width: 900px) {
-      :root {
-        --page-padding: 8px;
-      }
     }
   </style>
 </head>
@@ -90,42 +78,56 @@
       };
     }
 
+    function measureNaturalSize() {
+      // remove scaling before measuring
+      visStage.style.transform = "scale(1)";
+
+      // use actual rendered content size
+      naturalWidth = visStage.scrollWidth;
+      naturalHeight = visStage.scrollHeight;
+    }
+
     function applyScale() {
       if (!naturalWidth || !naturalHeight) return;
 
-      const shellWidth = visShell.clientWidth;
-      const shellHeight = visShell.clientHeight;
+      const pagePadding = 16; // 8px left + 8px right
+      const availableWidth = window.innerWidth - pagePadding;
+      const availableHeight = window.innerHeight - pagePadding;
 
-      const scaleX = shellWidth / naturalWidth;
-      const scaleY = shellHeight / naturalHeight;
+      const scaleX = availableWidth / naturalWidth;
+      const scaleY = availableHeight / naturalHeight;
 
-      // Never upscale beyond natural size
+      // Fit if possible, but never enlarge above natural size
       const scale = Math.min(scaleX, scaleY, 1);
 
-      visStage.style.transform = `scale(${scale})`;
-      visShell.style.height = `${shellHeight}px`;
       visStage.style.width = `${naturalWidth}px`;
       visStage.style.height = `${naturalHeight}px`;
+      visStage.style.transform = `scale(${scale})`;
+
+      // Reserve enough space in normal layout so scrolling still works if needed
+      visShell.style.minHeight = `${Math.ceil(naturalHeight * scale)}px`;
     }
 
     async function init() {
-      const result = await vegaEmbed("#vis-stage", "spec.json", {
+      await vegaEmbed("#vis-stage", "spec.json", {
         actions: false,
         renderer: "svg"
       });
 
-      await result.view.runAsync();
-
-      const embedRoot =
-        visStage.querySelector(".vega-embed") || visStage.firstElementChild;
-
-      naturalWidth = embedRoot.offsetWidth;
-      naturalHeight = embedRoot.offsetHeight;
-
-      applyScale();
+      // wait a moment so the browser fully lays out the SVG
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          measureNaturalSize();
+          applyScale();
+        });
+      });
     }
 
-    const onResize = debounce(applyScale, 80);
+    const onResize = debounce(() => {
+      measureNaturalSize();
+      applyScale();
+    }, 100);
+
     window.addEventListener("resize", onResize);
 
     init().catch(console.error);
