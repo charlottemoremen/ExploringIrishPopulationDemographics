@@ -200,7 +200,7 @@
           "as": "selectedRegion"
         },
         {
-          "calculate": "datum['NUTS 3 Region'] == 'Dublin' ? 'Dublin' : ((datum.selectedRegion == null || datum.selectedRegion == 'Dublin') ? 'Avg. of All Other Regions' : (datum['NUTS 3 Region'] == datum.selectedRegion ? datum.selectedRegion : null))",
+          "calculate": "datum['NUTS 3 Region'] == 'Dublin' ? 'Dublin' : ((datum.selectedRegion == null || datum.selectedRegion == 'Dublin') ? 'Avg. of Other Regions' : (datum['NUTS 3 Region'] == datum.selectedRegion ? datum.selectedRegion : null))",
           "as": "Region_Group"
         },
         { "filter": "datum.Region_Group != null" },
