@@ -14,48 +14,75 @@
       box-sizing: border-box;
     }
 
+    :root {
+      --page-padding: 12px;
+    }
+
     html, body {
       margin: 0;
       padding: 0;
       width: 100%;
-      min-height: 100%;
+      height: 100%;
       background: #ffffff;
       color: #222;
       font-family: Arial, sans-serif;
+      overflow: hidden;
     }
 
     body {
-      overflow-x: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
     }
 
     .page {
-      width: 100%;
-      min-height: 100vh;
-      padding: 12px;
+      width: 100vw;
+      height: 100vh;
+      padding: var(--page-padding);
+      overflow: hidden;
     }
 
-    #vis {
+    #vis-shell {
       width: 100%;
-      max-width: 1500px;
-      margin: 0 auto;
+      height: 100%;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    #vis-stage {
+      transform-origin: top center;
+      will-change: transform;
     }
 
     .vega-embed,
     .vega-embed > div {
-      width: 100% !important;
-      max-width: 100% !important;
+      max-width: none !important;
+    }
+
+    @media (max-width: 900px) {
+      :root {
+        --page-padding: 8px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <div id="vis"></div>
+    <div id="vis-shell">
+      <div id="vis-stage"></div>
+    </div>
   </div>
 
   <script>
-    const VIS_ID = "#vis";
+    const visShell = document.getElementById("vis-shell");
+    const visStage = document.getElementById("vis-stage");
 
-    function debounce(fn, delay = 120) {
+    let naturalWidth = null;
+    let naturalHeight = null;
+
+    function debounce(fn, delay = 100) {
       let timer = null;
       return (...args) => {
         clearTimeout(timer);
@@ -63,83 +90,45 @@
       };
     }
 
-    function buildResponsiveSpec(baseSpec) {
-      const pagePadding = 24; // approx left + right page padding
-      const availableWidth = Math.min(window.innerWidth - pagePadding, 1500);
+    function applyScale() {
+      if (!naturalWidth || !naturalHeight) return;
 
-      const isNarrow = availableWidth < 900;
-      const gap = isNarrow ? 16 : 24;
-      const panelWidth = isNarrow
-        ? Math.max(320, availableWidth - 20)
-        : Math.max(320, Math.floor((availableWidth - gap) / 2));
+      const shellWidth = visShell.clientWidth;
+      const shellHeight = visShell.clientHeight;
 
-      const topHeight = isNarrow ? 320 : 380;
-      const bottomHeight = isNarrow ? 320 : 420;
+      const scaleX = shellWidth / naturalWidth;
+      const scaleY = shellHeight / naturalHeight;
 
-      const spec = structuredClone(baseSpec);
+      // Never upscale beyond natural size
+      const scale = Math.min(scaleX, scaleY, 1);
 
-      spec.spacing = gap;
-      spec.config = spec.config || {};
-      spec.config.concat = { spacing: gap };
-      spec.autosize = {
-        type: "pad",
-        contains: "padding",
-        resize: true
-      };
-
-      if (isNarrow) {
-        spec.vconcat = [
-          spec.vconcat[0].hconcat[0],
-          spec.vconcat[0].hconcat[1],
-          spec.vconcat[1].hconcat[0],
-          spec.vconcat[1].hconcat[1]
-        ];
-
-        spec.vconcat[0].width = panelWidth;
-        spec.vconcat[0].height = topHeight;
-        spec.vconcat[1].width = panelWidth;
-        spec.vconcat[1].height = topHeight;
-        spec.vconcat[2].width = panelWidth;
-        spec.vconcat[2].height = bottomHeight;
-        spec.vconcat[3].width = panelWidth;
-        spec.vconcat[3].height = bottomHeight;
-      } else {
-        spec.vconcat[0].spacing = gap;
-        spec.vconcat[1].spacing = gap;
-
-        spec.vconcat[0].hconcat[0].width = panelWidth;
-        spec.vconcat[0].hconcat[0].height = topHeight;
-        spec.vconcat[0].hconcat[1].width = panelWidth;
-        spec.vconcat[0].hconcat[1].height = topHeight;
-
-        spec.vconcat[1].hconcat[0].width = panelWidth;
-        spec.vconcat[1].hconcat[0].height = bottomHeight;
-        spec.vconcat[1].hconcat[1].width = panelWidth;
-        spec.vconcat[1].hconcat[1].height = bottomHeight;
-      }
-
-      return spec;
+      visStage.style.transform = `scale(${scale})`;
+      visShell.style.height = `${shellHeight}px`;
+      visStage.style.width = `${naturalWidth}px`;
+      visStage.style.height = `${naturalHeight}px`;
     }
 
-    async function renderVis() {
-      const response = await fetch("spec.json");
-      const baseSpec = await response.json();
-      const spec = buildResponsiveSpec(baseSpec);
-
-      document.querySelector(VIS_ID).innerHTML = "";
-
-      await vegaEmbed(VIS_ID, spec, {
+    async function init() {
+      const result = await vegaEmbed("#vis-stage", "spec.json", {
         actions: false,
         renderer: "svg"
       });
+
+      await result.view.runAsync();
+
+      const embedRoot =
+        visStage.querySelector(".vega-embed") || visStage.firstElementChild;
+
+      naturalWidth = embedRoot.offsetWidth;
+      naturalHeight = embedRoot.offsetHeight;
+
+      applyScale();
     }
 
-    const rerender = debounce(() => {
-      renderVis().catch(console.error);
-    }, 150);
+    const onResize = debounce(applyScale, 80);
+    window.addEventListener("resize", onResize);
 
-    window.addEventListener("resize", rerender);
-    renderVis().catch(console.error);
+    init().catch(console.error);
   </script>
 </body>
 </html>
