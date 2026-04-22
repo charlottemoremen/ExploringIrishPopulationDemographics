@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Exploring Irish Population Demographics</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/vega"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 24px;
+      background: #ffffff;
+      color: #222;
+    }
+
+    h1 {
+      margin-bottom: 8px;
+    }
+
+    .note {
+      color: #666;
+      margin-bottom: 20px;
+    }
+
+    #vis {
+      max-width: 1300px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Exploring Irish Population Demographics</h1>
+  <div class="note">Interactive dashboard built with Vega-Lite</div>
+  <div id="vis"></div>
+
+  <script>
+    vegaEmbed("#vis", "spec.json", {
+      actions: {
+        export: true,
+        source: false,
+        editor: true
+      }
+    }).catch(console.error);
+  </script>
+</body>
+</html>
