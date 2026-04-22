@@ -14,10 +14,6 @@
       box-sizing: border-box;
     }
 
-    :root {
-      --page-padding: 16px;
-    }
-
     html, body {
       margin: 0;
       padding: 0;
@@ -33,14 +29,14 @@
     }
 
     .page {
-      width: 100vw;
+      width: 100%;
       min-height: 100vh;
-      padding: var(--page-padding);
+      padding: 12px;
     }
 
     #vis {
       width: 100%;
-      max-width: 1600px;
+      max-width: 1500px;
       margin: 0 auto;
     }
 
@@ -48,12 +44,6 @@
     .vega-embed > div {
       width: 100% !important;
       max-width: 100% !important;
-    }
-
-    @media (max-width: 900px) {
-      :root {
-        --page-padding: 10px;
-      }
     }
   </style>
 </head>
@@ -63,13 +53,92 @@
   </div>
 
   <script>
+    const VIS_ID = "#vis";
+
+    function debounce(fn, delay = 120) {
+      let timer = null;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+      };
+    }
+
+    function buildResponsiveSpec(baseSpec) {
+      const pagePadding = 24; // approx left + right page padding
+      const availableWidth = Math.min(window.innerWidth - pagePadding, 1500);
+
+      const isNarrow = availableWidth < 900;
+      const gap = isNarrow ? 16 : 24;
+      const panelWidth = isNarrow
+        ? Math.max(320, availableWidth - 20)
+        : Math.max(320, Math.floor((availableWidth - gap) / 2));
+
+      const topHeight = isNarrow ? 320 : 380;
+      const bottomHeight = isNarrow ? 320 : 420;
+
+      const spec = structuredClone(baseSpec);
+
+      spec.spacing = gap;
+      spec.config = spec.config || {};
+      spec.config.concat = { spacing: gap };
+      spec.autosize = {
+        type: "pad",
+        contains: "padding",
+        resize: true
+      };
+
+      if (isNarrow) {
+        spec.vconcat = [
+          spec.vconcat[0].hconcat[0],
+          spec.vconcat[0].hconcat[1],
+          spec.vconcat[1].hconcat[0],
+          spec.vconcat[1].hconcat[1]
+        ];
+
+        spec.vconcat[0].width = panelWidth;
+        spec.vconcat[0].height = topHeight;
+        spec.vconcat[1].width = panelWidth;
+        spec.vconcat[1].height = topHeight;
+        spec.vconcat[2].width = panelWidth;
+        spec.vconcat[2].height = bottomHeight;
+        spec.vconcat[3].width = panelWidth;
+        spec.vconcat[3].height = bottomHeight;
+      } else {
+        spec.vconcat[0].spacing = gap;
+        spec.vconcat[1].spacing = gap;
+
+        spec.vconcat[0].hconcat[0].width = panelWidth;
+        spec.vconcat[0].hconcat[0].height = topHeight;
+        spec.vconcat[0].hconcat[1].width = panelWidth;
+        spec.vconcat[0].hconcat[1].height = topHeight;
+
+        spec.vconcat[1].hconcat[0].width = panelWidth;
+        spec.vconcat[1].hconcat[0].height = bottomHeight;
+        spec.vconcat[1].hconcat[1].width = panelWidth;
+        spec.vconcat[1].hconcat[1].height = bottomHeight;
+      }
+
+      return spec;
+    }
+
     async function renderVis() {
-      await vegaEmbed("#vis", "spec.json", {
+      const response = await fetch("spec.json");
+      const baseSpec = await response.json();
+      const spec = buildResponsiveSpec(baseSpec);
+
+      document.querySelector(VIS_ID).innerHTML = "";
+
+      await vegaEmbed(VIS_ID, spec, {
         actions: false,
         renderer: "svg"
       });
     }
 
+    const rerender = debounce(() => {
+      renderVis().catch(console.error);
+    }, 150);
+
+    window.addEventListener("resize", rerender);
     renderVis().catch(console.error);
   </script>
 </body>
