@@ -28,7 +28,12 @@
       "height": 350,
   
       "projection": { "type": "mercator" },
-      "title": "2024 Irish Population by Region",
+      "title": {
+      "text": "2024 Irish Population by Region",
+      "anchor": "middle",
+      "frame": "group",
+      "offset": 10
+      }
       "transform": [
         {
           "lookup": "properties.NUTS3NAME",
@@ -73,7 +78,9 @@
           "title": "Population",
           "scale": { "scheme": "greens" },
           "legend": {
-            "labelExpr": "datum.value >= 1e6 ? format(datum.value / 1e6, '.1f') + 'M' : format(datum.value / 1e3, '.0f') + 'k'"
+            "labelExpr": "datum.value >= 1e6 ? format(datum.value / 1e6, '.1f') + 'M' : format(datum.value / 1e3, '.0f') + 'k'",
+            "orient": "right",
+            "offset": 5
           }
         },
         "strokeWidth": {
