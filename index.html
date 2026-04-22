@@ -14,89 +14,63 @@
       box-sizing: border-box;
     }
 
-    body {
+    :root {
+      --page-padding: 16px;
+    }
+
+    html, body {
       margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100%;
       background: #ffffff;
       color: #222;
       font-family: Arial, sans-serif;
     }
 
+    body {
+      overflow-x: hidden;
+    }
+
     .page {
+      width: 100vw;
+      min-height: 100vh;
+      padding: var(--page-padding);
+    }
+
+    #vis {
       width: 100%;
+      max-width: 1600px;
       margin: 0 auto;
-      padding: 16px;
-    }
-
-    #vis-shell {
-      width: 100%;
-      overflow: hidden;
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-    }
-
-    #vis-stage {
-      transform-origin: top center;
-      will-change: transform;
     }
 
     .vega-embed,
     .vega-embed > div {
-      max-width: none !important;
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+
+    @media (max-width: 900px) {
+      :root {
+        --page-padding: 10px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <div id="vis-shell">
-      <div id="vis-stage"></div>
-    </div>
+    <div id="vis"></div>
   </div>
 
   <script>
-    const visShell = document.getElementById("vis-shell");
-    const visStage = document.getElementById("vis-stage");
-
-    let naturalWidth = null;
-    let naturalHeight = null;
-
-    function applyScale() {
-      if (!naturalWidth || !naturalHeight) return;
-
-      const shellWidth = visShell.clientWidth;
-      const scale = Math.min(1, shellWidth / naturalWidth);
-
-      visStage.style.transform = `scale(${scale})`;
-      visShell.style.height = `${Math.ceil(naturalHeight * scale)}px`;
-    }
-
-    function debounce(fn, delay = 100) {
-      let timer = null;
-      return (...args) => {
-        clearTimeout(timer);
-        timer = setTimeout(() => fn(...args), delay);
-      };
-    }
-
-    async function init() {
-      const result = await vegaEmbed("#vis-stage", "spec.json", {
+    async function renderVis() {
+      await vegaEmbed("#vis", "spec.json", {
         actions: false,
         renderer: "svg"
       });
-
-      await result.view.runAsync();
-
-      const embedRoot =
-        visStage.querySelector(".vega-embed") || visStage.firstElementChild;
-
-      naturalWidth = embedRoot.offsetWidth;
-      naturalHeight = embedRoot.offsetHeight;
-
-      applyScale();
     }
 
-    window.addEventListener("resize", debounce(applyScale, 80));
-    init().catch(console.error);
+    renderVis().catch(console.error);
   </script>
 </body>
 </html>
