@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Exploring Irish Population Demographics</title>
+  <title>Irish Population Dashboard</title>
 
   <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
   <script src="https://cdn.jsdelivr.net/npm/vega-lite@6"></script>
@@ -23,137 +23,80 @@
 
     .page {
       width: 100%;
-      max-width: 1500px;
       margin: 0 auto;
       padding: 16px;
     }
 
-    h1 {
-      margin: 0 0 8px 0;
-      text-align: center;
-      font-size: 28px;
-    }
-
-    .note {
-      margin: 0 0 20px 0;
-      text-align: center;
-      color: #666;
-      font-size: 14px;
-    }
-
-    #vis {
+    #vis-shell {
       width: 100%;
-      min-width: 0;
+      overflow: hidden;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    #vis-stage {
+      transform-origin: top center;
+      will-change: transform;
     }
 
     .vega-embed,
     .vega-embed > div {
-      width: 100%;
+      max-width: none !important;
     }
   </style>
 </head>
 <body>
   <div class="page">
-    <div id="vis"></div>
+    <div id="vis-shell">
+      <div id="vis-stage"></div>
+    </div>
   </div>
 
   <script>
-    const visEl = document.getElementById("vis");
-    let baseSpec = null;
-    let currentView = null;
-    let resizeTimer = null;
+    const visShell = document.getElementById("vis-shell");
+    const visStage = document.getElementById("vis-stage");
 
-    function deepClone(obj) {
-      return JSON.parse(JSON.stringify(obj));
+    let naturalWidth = null;
+    let naturalHeight = null;
+
+    function applyScale() {
+      if (!naturalWidth || !naturalHeight) return;
+
+      const shellWidth = visShell.clientWidth;
+      const scale = Math.min(1, shellWidth / naturalWidth);
+
+      visStage.style.transform = `scale(${scale})`;
+      visShell.style.height = `${Math.ceil(naturalHeight * scale)}px`;
     }
 
-    function buildResponsiveSpec(spec, containerWidth) {
-      const s = deepClone(spec);
-
-      const mobile = containerWidth < 900;
-      const gap = mobile ? 24 : 32;
-      const columns = mobile ? 1 : 2;
-
-      const innerWidth = Math.max(containerWidth, 320);
-      const panelWidth = Math.floor((innerWidth - gap * (columns - 1)) / columns);
-
-      const topLeft = s.vconcat[0].hconcat[0];
-      const topRight = s.vconcat[0].hconcat[1];
-      const bottomLeft = s.vconcat[1].hconcat[0];
-      const bottomRight = s.vconcat[1].hconcat[1];
-
-      topLeft.width = panelWidth;
-      topRight.width = panelWidth;
-      bottomLeft.width = panelWidth;
-      bottomRight.width = panelWidth;
-
-      topLeft.height = mobile ? 300 : 350;
-      topRight.height = mobile ? 300 : 350;
-      bottomLeft.height = mobile ? 340 : 400;
-      bottomRight.height = mobile ? 340 : 400;
-
-      s.vconcat = [
-        mobile
-          ? {
-              vconcat: [topLeft, topRight],
-              spacing: gap,
-              resolve: s.vconcat[0].resolve
-            }
-          : {
-              hconcat: [topLeft, topRight],
-              spacing: gap,
-              resolve: s.vconcat[0].resolve
-            },
-        mobile
-          ? {
-              vconcat: [bottomLeft, bottomRight],
-              spacing: gap,
-              resolve: s.vconcat[1].resolve
-            }
-          : {
-              hconcat: [bottomLeft, bottomRight],
-              spacing: gap,
-              resolve: s.vconcat[1].resolve
-            }
-      ];
-
-      return s;
+    function debounce(fn, delay = 100) {
+      let timer = null;
+      return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+      };
     }
 
-    async function render() {
-      if (!baseSpec) {
-        const response = await fetch("spec.json");
-        baseSpec = await response.json();
-      }
-
-      const containerWidth = visEl.clientWidth;
-      const spec = buildResponsiveSpec(baseSpec, containerWidth);
-
-      if (currentView) {
-        currentView.finalize();
-        visEl.innerHTML = "";
-      }
-
-      const result = await vegaEmbed("#vis", spec, {
-        actions: {
-          export: true,
-          source: false,
-          editor: true
-        },
+    async function init() {
+      const result = await vegaEmbed("#vis-stage", "spec.json", {
+        actions: false,
         renderer: "svg"
       });
 
-      currentView = result.view;
-      window.dispatchEvent(new Event("resize"));
+      await result.view.runAsync();
+
+      const embedRoot =
+        visStage.querySelector(".vega-embed") || visStage.firstElementChild;
+
+      naturalWidth = embedRoot.offsetWidth;
+      naturalHeight = embedRoot.offsetHeight;
+
+      applyScale();
     }
 
-    const observer = new ResizeObserver(() => {
-      clearTimeout(resizeTimer);
-      resizeTimer = setTimeout(render, 100);
-    });
-
-    observer.observe(visEl);
-    render();
+    window.addEventListener("resize", debounce(applyScale, 80));
+    init().catch(console.error);
   </script>
 </body>
 </html>
